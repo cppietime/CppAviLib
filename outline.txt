@@ -1,0 +1,24 @@
+Write file (stores offsets in function)
+Add streams to avi
+For each stream, get its chunk and add it to the hdrl
+Write hdrl:
+	Write hdrl header
+	Write avih + add its length to hdrl
+	Write strl:
+		Write strl header
+		For every stream:
+			Mark its offset based on the stream
+			Write that stream's chunk and add its length to strl
+		Rewrite length for strl
+		Add updated strl length to hdrl
+	Rewrite length for hdrl
+Wrote movi header
+For every frame to be added:
+	Get processed chunk through frame
+	Pass chunk to frame to update length/buffer size
+	Write chunk and add its length to movi
+	Add chunk metadata to the avi's index
+Rewrite length for movi
+Update/rewrite each stream's length
+TODO index chunk
+Finalize file chunk
