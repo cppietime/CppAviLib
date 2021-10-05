@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     std::uint8_t *rgb = new std::uint8_t[3 * width * height];
     
     std::ofstream out("test.avi", std::ios_base::out | std::ios_base::binary);
-    float duration = 1;
+    float duration = 2;
 
     std::stringstream jpegStream;
     Avi::FlacMjpegAvi fmavi(width, height, fps, bitsPerSample, sampleRate, numChannels, static_cast<Avi::EncodingMode>(mode));

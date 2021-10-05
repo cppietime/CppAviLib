@@ -32,17 +32,10 @@ namespace Avi {
         Jpeg::flagHuffmanOptimal
     };
     
-    const int jpegQualities[ENCODING_MODES] = {
-        25,
-        50,
-        75,
-        100
-    };
-    
     FlacMjpegAvi::FlacMjpegAvi(
             int width, int height, float fps,
             int bitsPerSample, float sampleRate, int numChannels,
-            EncodingMode mode) :
+            EncodingMode mode, int jpegQuality) :
         Avi(AviMainHeader(fps, width, height))
     {
         Flac::FlacEncodeOptions flacOptions(
@@ -63,13 +56,25 @@ namespace Avi {
             nullptr,
             Jpeg::RELATIVE,
             std::pair<int, int>(1, 1),
-            jpegQualities[mode],
+            jpegQuality,
             jpegFlags[mode]
         );
-        flac = std::unique_ptr<Flac::Flac>(new Flac::Flac(flacOptions));
-        jpeg = std::unique_ptr<Jpeg::Jpeg>(new Jpeg::Jpeg(jpegSettings));
-        addStream(new AviMjpegStream(jpegSettings, fps));
-        addStream(new AviFlacStream(flacOptions, sampleRate));
+        flac = std::make_unique<Flac::Flac>(flacOptions);
+        jpeg = std::make_unique<Jpeg::Jpeg>(jpegSettings);
+        addStream(AviMjpegStream(jpegSettings, fps));
+        addStream(AviFlacStream(flacOptions));
+    }
+    
+    FlacMjpegAvi::FlacMjpegAvi(
+            const Jpeg::JpegSettings& jpegSettings,
+            const Flac::FlacEncodeOptions& flacSettings,
+            float fps) :
+        Avi(AviMainHeader(fps, jpegSettings.size.first, jpegSettings.size.second)),
+        flac {std::make_unique<Flac::Flac>(flacSettings)},
+        jpeg {std::make_unique<Jpeg::Jpeg>(jpegSettings)}
+    {
+        addStream(AviMjpegStream(jpegSettings, fps));
+        addStream(AviFlacStream(flacSettings));
     }
     
     void FlacMjpegAvi::writeSamples(std::ostream& stream)

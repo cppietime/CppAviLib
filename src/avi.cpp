@@ -96,13 +96,6 @@ namespace Avi {
         // }
     }
     
-    void Avi::addStream(AviStream *stream)
-    {
-        // headerList.strl.addStream(stream);
-        headerList.addStream(stream);
-        headerList.avih.numStreams++;
-    }
-    
     void Avi::writeFrame(
         std::ostream& stream,
         size_t streamNo, float seconds, std::uint32_t flags, const std::uint8_t *data, size_t size)

@@ -31,6 +31,7 @@ namespace Riff {
             std::streampos offset;
             RiffChunk(const char *fourCC, size_t dataSize = 0);
         public:
+            virtual ~RiffChunk() {}
             /*
             Seek to the stored offset and overwrite the size parameter
             */
@@ -85,6 +86,7 @@ namespace Riff {
             char containerType[FOURCC_SIZE];
         public:
             RiffContainer(const char *fourCC, const char *subCC);
+            virtual ~RiffContainer() {}
             virtual void writeTo(std::ostream& stream);
     };
     
@@ -96,6 +98,7 @@ namespace Riff {
             constexpr const static char *RIFF_FILE = "RIFF";
             RiffFile(const char *subCC) :
                 RiffContainer(RIFF_FILE, subCC) {}
+            virtual ~RiffFile() {}
             void finalize(std::ostream& stream);
     };
     
@@ -107,6 +110,7 @@ namespace Riff {
             constexpr const static char *LIST_FILE = "LIST";
             RiffList(const char *subCC) :
                 RiffContainer(LIST_FILE, subCC) {}
+            virtual ~RiffList() {}
     };
     
     class RiffConstList : public RiffList {
@@ -115,6 +119,7 @@ namespace Riff {
         public:
             RiffConstList(const char *subCC) :
                 RiffList(subCC) {}
+            virtual ~RiffConstList() {}
             virtual void writeTo(std::ostream& stream);
             void add(const RiffChunk& subChunk);
             inline RiffChunk& operator[](size_t index)
@@ -136,6 +141,7 @@ namespace Riff {
             RiffData(const char *fourCC, const std::uint8_t *data, size_t bytes) :
                 RiffChunk(fourCC, bytes),
                 data(data, data + bytes) {}
+            virtual ~RiffData() {}
             virtual void writeTo(std::ostream& stream);
     };
     
@@ -146,6 +152,7 @@ namespace Riff {
         public:
             RiffHeaderOnly(const char *fourCC) :
                 RiffChunk(fourCC) {}
+            virtual ~RiffHeaderOnly() {}
     };
     
 }
@@ -262,6 +269,7 @@ namespace Avi {
                 StreamType type, float fps,
                 const char *handler = DEFAULT_HANDLER, unsigned int scale = 1,
                 unsigned int width = 0, unsigned int height = 0);
+            virtual ~AviStream() {}
             Riff::RiffData getStrhChunk() const;
             virtual Riff::RiffData getStrfChunk() = 0;
             Riff::RiffData dataToChunk(
@@ -290,6 +298,7 @@ namespace Avi {
             AviMjpegStream(const Jpeg::JpegSettings& settings, float fps) :
                 AviStream(VIDEO, fps, MJPEG_HANDLER, 1, settings.size.first, settings.size.second),
                 settings {settings} {idCode = VIDEO_ID;}
+            virtual ~AviMjpegStream() {}
             virtual Riff::RiffData getStrfChunk();
     };
     
@@ -299,12 +308,13 @@ namespace Avi {
             Flac::Flac flac;
             std::streampos strhOffset;
         public:
-            AviFlacStream(const Flac::FlacEncodeOptions& settings, float sampleRate) :
-                AviStream(AUDIO, sampleRate / settings.blockSize,
+            AviFlacStream(const Flac::FlacEncodeOptions& settings) :
+                AviStream(AUDIO, settings.sampleRate / settings.blockSize,
                     DEFAULT_HANDLER, settings.blockSize),
                 flac(settings),
                 settings {settings},
                 strhOffset {0} {idCode = AUDIO_ID;}
+            virtual ~AviFlacStream() {}
             virtual Riff::RiffData getStrfChunk();
             inline Flac::Flac& getFlac()
             {
@@ -358,9 +368,15 @@ namespace Avi {
             */
             virtual void writeTo(std::ostream& stream);
             
-            inline void addStream(AviStream *stream)
+            // inline void addStream(AviStream *stream)
+            // {
+                // streams.push_back(std::unique_ptr<AviStream>(stream));
+            // }
+            
+            template <class T>
+            inline void addStream(T stream)
             {
-                streams.push_back(std::unique_ptr<AviStream>(stream));
+                streams.push_back(std::make_unique<T>(stream));
             }
     };
     
@@ -400,7 +416,14 @@ namespace Avi {
             {
                 writeFrame(stream, streamNo, seconds, flags, data.data(), data.size());
             }
-            void addStream(AviStream * stream);
+    
+            template <class T>
+            inline void addStream(T stream)
+            {
+                // headerList.strl.addStream(stream);
+                headerList.addStream(stream);
+                headerList.avih.numStreams++;
+            }
             /*
             Writes the file header chunk,
             Then writes the hdrl chunk list
@@ -435,9 +458,13 @@ namespace Avi {
             void writeSamples(std::ostream& stream);
         public:
             FlacMjpegAvi(
-                int width, int height, float fps,
-                int bitsPerSample, float sampleRate, int numChannels,
-                EncodingMode mode);
+                int width, int height, float fps = 30.0,
+                int bitsPerSample = 16, float sampleRate = 44100, int numChannels = 1,
+                EncodingMode mode = NORMAL, int jpegQuality = 50);
+            FlacMjpegAvi(
+                const Jpeg::JpegSettings& jpegSettings,
+                const Flac::FlacEncodeOptions& flacSettings,
+                float fps = 30.0);
             
             void prepare(std::ostream& stream);
             
