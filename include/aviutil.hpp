@@ -309,11 +309,13 @@ namespace Avi {
             std::streampos strhOffset;
         public:
             AviFlacStream(const Flac::FlacEncodeOptions& settings) :
-                AviStream(AUDIO, settings.sampleRate / settings.blockSize,
+                AviStream(AUDIO, (float)settings.sampleRate / settings.blockSize,
                     DEFAULT_HANDLER, settings.blockSize),
                 flac(settings),
                 settings {settings},
-                strhOffset {0} {idCode = AUDIO_ID;}
+                strhOffset {0} {
+                    idCode = AUDIO_ID;
+                }
             virtual ~AviFlacStream() {}
             virtual Riff::RiffData getStrfChunk();
             inline Flac::Flac& getFlac()
