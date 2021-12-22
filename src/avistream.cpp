@@ -3,7 +3,6 @@ avistream.cpp
 */
 
 #include <cstdint>
-#include <endian.h>
 #include <iostream>
 #include <sstream>
 #include <string>

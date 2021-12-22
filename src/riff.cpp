@@ -4,7 +4,6 @@ riff.cpp
 
 #include <algorithm>
 #include <cstdint>
-#include <endian.h>
 #include <iostream>
 #include "aviutil.hpp"
 
@@ -28,8 +27,10 @@ void Riff::RiffChunk::writeTo(std::ostream& stream)
     wordAlgin(stream);
     markOffset(stream);
     stream.write(fourCC, FOURCC_SIZE);
-    std::uint32_t le4 = htole32(dataSize);
-    stream.write(reinterpret_cast<const char*>(&le4), LENGTH_SIZE);
+    stream.put((std::uint8_t)(dataSize >> 0));
+    stream.put((std::uint8_t)(dataSize >> 8));
+    stream.put((std::uint8_t)(dataSize >> 16));
+    stream.put((std::uint8_t)(dataSize >> 24));
 }
 
 void Riff::RiffChunk::rewriteLength(std::ostream& stream)
@@ -38,10 +39,14 @@ void Riff::RiffChunk::rewriteLength(std::ostream& stream)
         return;
     }
     std::streampos store = stream.tellp();
+    stream.flush();
     stream.seekp(offset);
     stream.seekp(SIZE_OFFSET, std::ios_base::cur);
-    std::uint32_t le4 = htole32(dataSize);
-    stream.write(reinterpret_cast<const char*>(&le4), LENGTH_SIZE);
+    stream.put((std::uint8_t)(dataSize >> 0));
+    stream.put((std::uint8_t)(dataSize >> 8));
+    stream.put((std::uint8_t)(dataSize >> 16));
+    stream.put((std::uint8_t)(dataSize >> 24));
+    stream.flush();
     stream.seekp(store);
 }
 

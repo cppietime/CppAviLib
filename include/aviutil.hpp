@@ -169,7 +169,6 @@ namespace Avi {
     
     inline void toVectorLE(std::vector<std::uint8_t>& vector, std::uint32_t num, size_t bytes)
     {
-        std::uint32_t le = htole32(num);
         for (size_t i = 0; i < bytes; i++) {
             vector.push_back(reinterpret_cast<const std::uint8_t*>(&num)[i]);
         }

@@ -4,7 +4,6 @@ avi.cpp
 
 #include <algorithm>
 #include <cstdint>
-#include <endian.h>
 #include <iostream>
 #include <vector>
 #include "aviutil.hpp"
@@ -34,6 +33,7 @@ namespace Avi {
         std::streampos store = -1;
         if (offset != -1) {
             store = stream.tellp();
+            stream.flush();
             stream.seekp(offset);
         }
         std::cout << "Writing AVIH at " << stream.tellp() << std::endl;
@@ -127,8 +127,10 @@ namespace Avi {
         moviList.expand(moviOffset);
         moviList.rewriteLength(stream);
         std::streampos store = stream.tellp();
+        stream.flush();
         stream.seekp(headerList.getOffset());
         headerList.writeTo(stream);
+        stream.flush();
         stream.seekp(store);
         std::vector<std::uint8_t> indexData;
         std::sort(indexEntries.begin(), indexEntries.end());
